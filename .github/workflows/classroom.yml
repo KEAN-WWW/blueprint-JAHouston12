@@ -1,0 +1,40 @@
+name: Autograding Tests
+'on':
+- push
+- repository_dispatch
+permissions:
+  checks: write
+  actions: read
+  contents: read
+jobs:
+  run-autograding-tests:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-classroom[bot]'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: bp
+      id: bp
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: bp
+        setup-command: pip install -r requirements.txt
+        command: pytest tests/test_blueprint.py --pylint
+        timeout: 10
+        max-score: 10
+    - name: bp content
+      id: bp-content
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: bp content
+        setup-command: pip install -r requirements.txt
+        command: pytest tests/test_blueprint_content.py --pylint
+        timeout: 10
+        max-score: 10
+    - name: Autograding Reporter
+      uses: classroom-resources/autograding-grading-reporter@v1
+      env:
+        BP_RESULTS: "${{steps.bp.outputs.result}}"
+        BP-CONTENT_RESULTS: "${{steps.bp-content.outputs.result}}"
+      with:
+        runners: bp,bp-content
